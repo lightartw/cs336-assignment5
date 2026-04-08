@@ -210,7 +210,9 @@ def output_strs():
 
 @pytest.fixture
 def model_id():
-    return "/data/a5-alignment/models/Qwen2.5-Math-1.5B"
+    current_dir = Path(__file__).parent
+    model_path = (current_dir / "../models/Qwen2.5-Math-1.5B").resolve()
+    return str(model_path)
 
 
 @pytest.fixture
