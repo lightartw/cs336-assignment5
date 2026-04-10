@@ -3,7 +3,7 @@ from typing import Callable, List, Tuple
 from unittest.mock import patch
 from transformers.modeling_utils import PreTrainedModel
 from vllm import LLM, SamplingParams
-from vllm.model_executor import set_random_seed as vllm_set_random_seed
+from vllm.model_executor.utils import set_random_seed as vllm_set_random_seed
 import torch
 
 from pathlib import Path
