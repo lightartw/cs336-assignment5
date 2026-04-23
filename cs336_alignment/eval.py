@@ -74,7 +74,6 @@ def evaluate_vllm(
     and return a dictionary of detailed metrics.
     """
     logger.info(f"Starting generation for {len(prompts)} prompts...")
-    outputs = vllm_model.generate(prompts, eval_sampling_params)
 
     results = []
     
@@ -82,6 +81,8 @@ def evaluate_vllm(
     answer_correct_count = 0
     total_reward_sum = 0.0
     num_samples = len(prompts)
+
+    outputs = vllm_model.generate(prompts, eval_sampling_params)
 
     for output, expected_answer in zip(outputs, answers):
         prompt = output.prompt
@@ -156,7 +157,6 @@ from cs336_alignment.config import (
 OUTPUT_PATH = OUTPUT_DIR / "evaluation_results.json"
 
 def eval():
-    
     logger.info(f"Reading dataset from {TEST_PATH}...")
     prompts, answers = prepare_eval_data(TEST_PATH, PROMPT_PATH)
 

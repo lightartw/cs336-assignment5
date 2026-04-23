@@ -12,8 +12,8 @@ PROMPT_PATH = CURRENT_DIR / "prompts" / "r1_zero.prompt"
 
 # model
 MODEL_DIR = PROJECT_ROOT / "models"
-QWEN_PATH = MODEL_DIR / "Qwen2.5-Math-1.5B"
-SFT_PATH = MODEL_DIR / "Qwen2.5-Math-1.5B-sft"
+QWEN_PATH = MODEL_DIR / "Qwen2.5-0.5B"       # "Qwen2.5-Math-1.5B"
+SFT_PATH = MODEL_DIR /  "Qwen2.5-0.5B-sft"   # "Qwen2.5-Math-1.5B-sft"
 
 # output
 OUTPUT_DIR = PROJECT_ROOT / "results"

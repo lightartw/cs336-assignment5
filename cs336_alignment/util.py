@@ -111,3 +111,15 @@ def log_generations(
     label: List[str],
 ) -> None:
     pass
+
+
+def masked_mean(
+    tensor: torch.Tensor,
+    mask: torch.Tensor,
+    dim: int | None = None,
+) -> torch.Tensor:
+    masked_tensor = torch.where(mask, tensor, torch.zeros_like(tensor))
+    sum_tensor = masked_tensor.sum(dim=dim)
+    
+    count = mask.sum(dim=dim)
+    return sum_tensor / count

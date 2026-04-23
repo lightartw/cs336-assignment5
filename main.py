@@ -8,13 +8,13 @@ def main():
     
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
     parser.add_argument("--batch_size", type=int, default=32, help="Total batch size")
-    parser.add_argument("--max_iters", type=int, default=1000, help="Maximum number of iterations")
+    parser.add_argument("--max_iters", type=int, default=50, help="Maximum number of iterations")
     parser.add_argument("--grad_accumulate_steps", type=int, default=16, help="Gradient accumulation steps")
     parser.add_argument("--device", type=str, default="cuda", help="Training device (default: cuda)")
     
     parser.add_argument("--num_examples", type=int, default=128, help="Number of dataset examples to use")
-    parser.add_argument("--eval_interval", type=int, default=100, help="Steps between evaluations")
-    parser.add_argument("--log_interval", type=int, default=10, help="Steps between logging")
+    parser.add_argument("--eval_interval", type=int, default=2, help="Steps between evaluations")
+    parser.add_argument("--log_interval", type=int, default=1, help="Steps between logging")
     
     args = parser.parse_args()
     

@@ -80,13 +80,13 @@ def train(config: TrainingConfig):
     else:
         policy_device = "cuda:0"
         vllm_device = "cuda:0"
-        vllm_gpu_util = 0.6 
+        vllm_gpu_util = 0.6
         logger.info("Detected 1 GPU. Policy and vLLM will share cuda:0.")
     config.device = policy_device
     
     # 2.wandb
     wandb.init(
-        project="qwen-math-sft",
+        project="qwen-0.5B-sft",
         name=f"sft_samples_{config.num_examples}",
         config=config.model_dump()
     )
