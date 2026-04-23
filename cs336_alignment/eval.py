@@ -35,7 +35,7 @@ def prepare_eval_data(test_path: Path, prompt_path: Path) -> Tuple[List[str], Li
     
     return prompts, answers
 
-def init_vllm(model_id: str, device: str, seed: int, gpu_memory_utilization: float = 0.85):
+def init_vllm(model_id: str, device: str, seed: int, dtype: torch.dtype, gpu_memory_utilization: float = 0.85):
     """
     Start the inference process, here we use vLLM to hold a model on
     a GPU separate from the policy.
@@ -51,7 +51,7 @@ def init_vllm(model_id: str, device: str, seed: int, gpu_memory_utilization: flo
         return LLM(
             model=model_id,
             device=device,
-            dtype=torch.bfloat16,
+            dtype=dtype,
             enable_prefix_caching=True,
             gpu_memory_utilization=gpu_memory_utilization,
         )

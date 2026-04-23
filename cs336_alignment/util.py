@@ -1,8 +1,20 @@
+import json
+from pathlib import Path
+import shutil
 from typing import Callable, List
 
 import torch
 from transformers.modeling_utils import PreTrainedModel
 from transformers.tokenization_utils import PreTrainedTokenizer
+
+import logging
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S"
+)
+logger = logging.getLogger(__name__)
 
 def tokenize_prompt_and_output(
         prompt_strs: list[str], 
@@ -110,7 +122,7 @@ def log_generations(
     prompt: List[str],
     label: List[str],
 ) -> None:
-    pass
+    raise NotADirectoryError
 
 
 def masked_mean(
@@ -123,3 +135,28 @@ def masked_mean(
     
     count = mask.sum(dim=dim)
     return sum_tensor / count
+
+
+# training util
+
+def load_dataset_subset(data_path: Path , num_examples: int|None=None):
+    with open(data_path, 'r', encoding='utf-8') as f:
+        data = [json.loads(line) for line in f]
+
+    if num_examples is not None:
+        data = data[:num_examples]
+    return data
+
+def save_checkpoint(model, tokenizer, sft_path: Path, step: int, max_to_keep: int = 2):
+    sft_path.mkdir(parents=True, exist_ok=True)
+    ckpt_dir = sft_path / f"checkpoint-{step}"
+    
+    model.save_pretrained(ckpt_dir)
+    tokenizer.save_pretrained(ckpt_dir)
+    logger.info(f"Checkpoint saved to {ckpt_dir}")
+    
+    ckpts = sorted(sft_path.glob("checkpoint-*"), key=lambda x: int(x.name.split("-")[-1]))
+    for old_ckpt in ckpts[:-max_to_keep]:
+        shutil.rmtree(old_ckpt)
+
+    return ckpt_dir

@@ -133,3 +133,18 @@ def grpo_microbatch_train_step(
     loss.backward()
 
     return loss, metadata
+
+
+def prepare_grpo_inputs(questions, responses, tokenizer, device):
+    full_texts = [q + r for q, r in zip(questions, responses)]
+    inputs = tokenizer(full_texts, return_tensors="pt", padding=True, truncation=True).to(device)
+    
+    prompt_inputs = tokenizer(questions, return_tensors="pt", padding=True)
+    prompt_lens = [len(ids) for ids in prompt_inputs["input_ids"]]
+    
+    response_mask = torch.zeros_like(inputs["input_ids"], dtype=torch.bool)
+    for i, p_len in enumerate(prompt_lens):
+        response_mask[i, p_len:] = True
+        response_mask[i] = response_mask[i] & (inputs["input_ids"][i] != tokenizer.pad_token_id)
+        
+    return inputs["input_ids"], response_mask

@@ -1,9 +1,6 @@
-import json
 import random
-import shutil
 
 import torch
-from pathlib import Path
 from transformers import AutoModelForCausalLM, AutoTokenizer, get_cosine_schedule_with_warmup
 from transformers.tokenization_utils import PreTrainedTokenizer
 import wandb
@@ -12,11 +9,13 @@ import logging
 from cs336_alignment.config import (
     QWEN_PATH, TRAIN_PATH, 
     TEST_PATH, PROMPT_PATH,
-    OUTPUT_DIR, SFT_PATH,
+    SFT_EVAL_DIR, SFT_PATH,
     TrainingConfig
 )
 from cs336_alignment.util import (
     get_response_log_probs,
+    load_dataset_subset,
+    save_checkpoint,
     sft_microbatch_train_step,
     tokenize_prompt_and_output
 )
@@ -35,14 +34,6 @@ logger = logging.getLogger(__name__)
 
 
 
-def load_dataset_subset(data_path: Path , num_examples: int|None=None):
-    with open(data_path, 'r', encoding='utf-8') as f:
-        data = [json.loads(line) for line in f]
-
-    if num_examples is not None:
-        data = data[:num_examples]
-    return data
-
 def get_micro_batch(
     dataset_subset: list[dict],
     tokenizer: PreTrainedTokenizer,
@@ -53,20 +44,6 @@ def get_micro_batch(
     prompt_strs = [item["question"] for item in batch_data]
     output_strs = [item["answer"] for item in batch_data]
     return tokenize_prompt_and_output(prompt_strs, output_strs, tokenizer)
-
-def save_checkpoint(model, tokenizer, sft_path: Path, step: int, max_to_keep: int = 2):
-    sft_path.mkdir(parents=True, exist_ok=True)
-    ckpt_dir = sft_path / f"checkpoint-{step}"
-    
-    model.save_pretrained(ckpt_dir)
-    tokenizer.save_pretrained(ckpt_dir)
-    logger.info(f"Checkpoint saved to {ckpt_dir}")
-    
-    ckpts = sorted(sft_path.glob("checkpoint-*"), key=lambda x: int(x.name.split("-")[-1]))
-    for old_ckpt in ckpts[:-max_to_keep]:
-        shutil.rmtree(old_ckpt)
-
-    return ckpt_dir
 
 
 def train(config: TrainingConfig):
@@ -83,6 +60,7 @@ def train(config: TrainingConfig):
         vllm_gpu_util = 0.6
         logger.info("Detected 1 GPU. Policy and vLLM will share cuda:0.")
     config.device = policy_device
+    dtype = getattr(torch, config.dtype)
     
     # 2.wandb
     wandb.init(
@@ -113,7 +91,7 @@ def train(config: TrainingConfig):
 
     model = AutoModelForCausalLM.from_pretrained(
         ckpt_dir,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=dtype,
         attn_implementation="flash_attention_2", 
     ).to(config.device)
     tokenizer = AutoTokenizer.from_pretrained(ckpt_dir)
@@ -130,7 +108,8 @@ def train(config: TrainingConfig):
         model_id=str(QWEN_PATH),
         device=vllm_device, 
         seed=42,
-        gpu_memory_utilization=vllm_gpu_util
+        gpu_memory_utilization=vllm_gpu_util,
+        dtype=dtype
     )
 
     logger.info(f"Training started on {len(train_data_subset)} examples.")
@@ -205,7 +184,7 @@ def train(config: TrainingConfig):
                     vllm_engine=vllm_engine,
                     prompts=eval_prompts, 
                     answers=eval_answers, 
-                    output_dir=OUTPUT_DIR, 
+                    output_dir=SFT_EVAL_DIR, 
                     step= i + 1
                 )
             wandb.log({
